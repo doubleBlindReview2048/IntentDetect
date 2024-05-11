@@ -13,7 +13,7 @@ Capturing Analytical Intents from Text
   OPENAI_API_KEY=<YOUR OPENAI_API_KEY>
   LlamaAPI_KEY=<LlamaAPI_KEY>
   ```
-  For more information on how to obtain API Keys, refer to : [OpenAI](https://platform.openai.com/docs/quickstart) and [LLama AI](https://docs.llama-api.com/api-token).
+For more information on how to obtain API Keys, refer to : [OpenAI](https://platform.openai.com/docs/quickstart) and [LLama AI](https://docs.llama-api.com/api-token).
   
 
 ### Building Docker image
