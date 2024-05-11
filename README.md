@@ -1,5 +1,7 @@
 # IntentDetect
 
+Capturing analytical intents from textual descriptions
+
 ## Getting started
 
 ### Before you begin
