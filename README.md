@@ -1,6 +1,6 @@
 # IntentDetect
 
-Capturing analytical intents from textual descriptions
+Capturing Analytical Intents from Text
 
 ## Getting started
 
