@@ -2,8 +2,8 @@ flask
 openai
 llamaapi
 python-dotenv
-# seaborn
-# graphviz
-# matplotlib
+seaborn
+graphviz
+matplotlib
 numpy
 pandas

@@ -34,9 +34,9 @@
           <div class="field">
             <label class="label">Upload your data</label>
             <div class="file has-name is-three-quarters">
-              <label class="file-label">
+              <label class="file-label" style="width: 100%;">
                 <input class="file-input" type="file" name="datafile" placeholder="" @change="onSelectedFileChange" />
-                <span class="file-cta" style="width: 100%;">
+                <span class="file-cta">
                   <span class="file-icon">
                     <i class="fas fa-upload"></i>
                   </span>
@@ -77,22 +77,14 @@
           </div>
           <div class="field is-grouped">
             <div class="control">
-              <button class="button is-success has-text-white" :disabled="validateUserInput()" @click="onGenerateClick">Predict Analytical Intent</button>
-            </div>
-            <!-- Second Button
-            <div class="control">
-              <button class="button is-danger is-fullwidth has-text-white" :disabled="validateUserInput()" @click="onResetClick" style="width: 100%; opacity: 50%;">Clear Input</button>
-            </div> -->
-            <!-- Third Button -->
-            <div class="control">
-            <button class="button is-fullwidth has-text-white" @click="onWorkflowClick" style="width: 100%; opacity: 50% ;background-color: blue;">Next</button>
+              <button class="button" :class="{'is-success has-text-white': !workflowCompleted, 'is-dark': workflowCompleted}" :disabled="validateUserInput()" @click="workflowCompleted ? onResetClick() : onGenerateClick()">
+                <span x-text="workflowCompleted ? 'Reset' : 'Predict Analytical Intent'"></span>
+            </button>
             </div>
           </div>      
         </section>
         <section x-show="result">
-          <div id="result-container" class="mt-6 border rounded" style="border-width: 2px;">
-            <p x-text="result"></p>
-          </div>
+          <div id="result-container" class="mt-6 border rounded" style="border-width: 2px;" x-html="result"></div>
         </section>
       </section>
     </div>
@@ -113,62 +105,57 @@
       document.addEventListener('alpine:init', () => {
         Alpine.data('dataUpload', () => ({
           textData: '',
-          selectedModel: 'gpt-4', // Set default value to one of the options
+          selectedModel: 'gpt-4',
           fileName: '',
           fileUploaded: null,
           result: '',
+          workflowCompleted: false,
           onModelChange(e) {
-            console.log(`Selected Model: ${e.target.value}`)
-            this.selectedModel = e.target.value
+            this.selectedModel = e.target.value;
           },
           onSelectedFileChange(e) {
             if (e.target.files?.length > 0) {
-              const file = event.target.files[0]
-              this.fileName = file.name
-              this.fileUploaded = file
+              const file = e.target.files[0];
+              this.fileName = file.name;
+              this.fileUploaded = file;
             }
           },
-          async onGenerateClick(e) {
-            let formData = new FormData()
-            formData.append('textData', this.textData)
-            formData.append('selectedModel', this.selectedModel)
-            formData.append('fileName', this.fileName)
-            formData.append('fileUploaded', this.fileUploaded)
-  
+          async onGenerateClick() {
+            let formData = new FormData();
+            formData.append('textData', this.textData);
+            formData.append('selectedModel', this.selectedModel);
+            formData.append('fileName', this.fileName);
+            formData.append('fileUploaded', this.fileUploaded);
+      
             const response = await fetch('/api/workflow', {
               method: 'POST',
               body: formData
-            })
-            this.result = document.getElementById('result-container'); // Assuming there's a div with id 'result-container'
-            this.result.innerHTML = await response.text(); // Set innerHTML to render HTML markup
+            });
+            this.result = await response.text();
+            this.workflowCompleted = true;
           },
-          async onWorkflowClick(e) {
-                  const response = await fetch('/api/workflow/generate', {
-                  method: 'GET',
-              });
-              const responseData = await response.text();
-              document.body.innerHTML = responseData; // Replace the entire HTML
+          async onNextClick() {
+            window.location.href = "/workflow";
+
           },
-          onResetClick(e) {
-            this.textData = ''
-            this.selectedModel = 'gpt-4' // Reset to default value
-            this.fileName =  ''
-            this.fileUploaded = null
-            this.result = ''
-            // Reset the file input field
-            const fileInput = document.querySelector('input[type="file"]')
+          onResetClick() {
+            this.textData = '';
+            this.selectedModel = 'gpt-4';
+            this.fileName = '';
+            this.fileUploaded = null;
+            this.result = '';
+            const fileInput = document.querySelector('input[type="file"]');
             if (fileInput) {
-                fileInput.value = ''
+              fileInput.value = '';
             }
+            this.workflowCompleted = false;
           },
           validateUserInput() {
-            return !(this.textData?.length > 0 && this.fileName?.length > 0)
-          },
-          validateResult() {
-            return !(this.textData?.length > 0 && this.fileName?.length > 0 && this.result?.length > 0)
+            return !(this.textData.length > 0 && this.fileName.length > 0);
           }
-        }))
-      })
+        }));
+      });
       </script>
   </body>
 </html>
+

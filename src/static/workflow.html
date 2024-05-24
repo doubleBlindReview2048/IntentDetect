@@ -4,6 +4,13 @@
     <title>Automatic Workflow Generation</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="/css/bulma.min.css">
+    <style>
+      /* CSS styling for italic, bold, and starting with a capital letter */
+      #prediction_placeholder {
+          font-weight: bold;
+          text-transform: capitalize;
+      }
+  </style>
   </head>
   <body class="has-navbar-fixed-top">
     <nav class="navbar is-fixed-top is-dark" role="navigation" aria-label="main navigation">
@@ -22,73 +29,50 @@
         </div>
       </div>
     </nav>
-    <script>
-      // Fetch JSON data from file
-      fetch('.example/accuracy_iris-test.json')
-        .then(response => response.json())
-        .then(data => {
-          // Extract accuracy value from JSON
-          var accuracyValue = data.accuracy;
-    
-          // Inject accuracy value into HTML
-          document.getElementById("accuracyValue").innerText = accuracyValue;
-        })
-        .catch(error => console.error('Error fetching data:', error));
-    </script>
     <div class="container pb-6 mb-6">
       <section class="hero">
         <div class="hero-body">
           <p class="title">Automatic Workflow Generation</p>
-          <!-- <p class="subtitle">Reviel the workflow based on your input</p> -->
         </div>
       </section>
-      <section> <p class="subtitle">Based on the textual description the problem can be treated as a Classification Task.</p></section>
+      <section> <p class="subtitle">Based on the textual description the problem can be treated as <span id="prediction_placeholder">{{ prediction }}</span>  task.</p></section>
       <br>  
-      <section>
-          <div class="columns">
-            <div class="field column">
-              <label class="label">Select the AutoML tool
-              </label>
-              <div style="display: flex; align-items: center;">
-
-                <div class="select" style="margin-right: 20px;">
-                  <select x-model="selectedTool">
-                    <option value="hyperopt">HyperOpt</option>
-                    <option value="tpot">TPOT</option>
-                  </select>
-                </div>&nbsp;
-                <button class="button is-success has-text-white">Generate Workflow</button>
-              </div>
-            </div>
-          </div>  
-        </section>
-        <br>
-        <br>
-        <p class="subtitle">Follwoing workflow has been generated based on your input.</p>
-        <br>
         <section>
-          <div style='display: flex; justify-content: center;'>
-            <br>
-            <img src='./example/iris-test-20240509140044-dataflow.png' alt='Dataflow Image' style='width: 50%; height: 1.5cm;'>
+          <div class="columns">
+              <div class="field column">
+                  <label class="label">Select the AutoML tool</label>
+                  <div style="display: flex; align-items: center;">
+                      <div class="select" style="margin-right: 20px;">
+                          <select id="selectedTool">
+                              <option value="hyperopt">HyperOpt</option>
+                              <option value="tpot">TPOT</option>
+                          </select>
+                      </div>&nbsp;
+                      <button class="button is-success has-text-white" onclick="getWorkflowClick()">Generate Workflow</button>
+                  </div>
+                  <p class="help">Currently Available for Regression and Classsification Task.</p>
+              </div>
           </div>
-        </section>
-        <br>
-        <section class="text-center">
-          <div style='display: flex; justify-content: center; font-size: 20px;'>
-            <div id="accuracyContainer" style="display: flex; justify-content: left;">
-            <strong>Accuracy:</strong>&nbsp; 0.63 
-            </div>
-            <img src='./example/iris-test-20240509140044-conf_matrix.png' alt='Dataflow Image' style='width: 40%; height: 10cm;'>
-          </div>
-        </section>
+      </section>
         <br>
         <br>
         <br>
-        <div class="field">
-          <div class="control">
-            <button class="button is-info is-fullwidth has-text-white"  @click="onBackClick" style=" width:3cm; opacity: 50%;">Back</button>
-          </div>
-        </div>    
+        <br>
+      <section>
+              <section>
+                <div id="dataflowImageContainer" style='display: flex; justify-content: center;'>
+              </div>
+              </section>
+              <br>
+              <br>
+              <section style="display: flex; justify-content: left;">
+                <div id="accuracyContainer">
+                    <!-- Content for accuracy container -->
+                </div>
+                <div id="visualisationImageContainer" style="margin-left: 20px;">
+                    <!-- Content for visualization image container -->
+                </div>
+            </section>
       </section>
     </div>
     <footer class="navbar is-fixed-bottom is-black is-flex-direction-row is-justify-content-center">
@@ -103,5 +87,68 @@
         </p>
       </div>
     </footer>
+    <script defer src="/js/alpinejs_3_13_10.min.js"></script>
+    <script>
+      function onBackClick() {
+        window.location.href = "/";  // Navigate back to index.html
+      }
+      function getWorkflowClick() {
+        var selectedTool = document.getElementById("selectedTool").value;
+        console.log("Selected Tool:", selectedTool);
+
+        var prediction = document.getElementById("prediction_placeholder").innerText; // Get the prediction text
+        
+        if (selectedTool === "hyperopt") {
+            fetch('/api/workflow/hyperopt', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ textData: prediction }), // Send prediction text to server
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Assuming data contains the file paths returned from the server
+                var dataflowImagePath = data.graph_filename;
+                var visualisationImagePath = data.img_filename;
+                visualisationImagePath = visualisationImagePath.replace('static/hyperopt-results/', '/')
+                dataflowImagePath = dataflowImagePath.replace('static/hyperopt-results/', '/')
+
+
+                var metric_value = data.metric_value;
+                var metric_name = data.metric_name;
+
+
+                if(metric_name=='accuracy'){
+                  metric = 'Accuracy'
+                }else{
+                  metric = 'MAE'}
+                
+                document.getElementById("accuracyContainer").innerHTML = `
+                      <div id="accuracyContainer" style="display: flex; justify-content: left;">
+                          <strong>${metric}:</strong>&nbsp; ${metric_value}
+                      </div>`;
+                
+
+                document.getElementById("dataflowImageContainer").innerHTML = `
+                <div id="dataflowImageContainer" style='display: flex; justify-content: center;'>
+
+                  <br>
+                  <img id="dataflowImage" src=${dataflowImagePath} alt='Visualisation Image' style='width: 100%; height: 1.5cm;'>
+                </div>`;
+
+                
+                document.getElementById("visualisationImageContainer").innerHTML = `
+                <div id="visualisationImageContainer" style='display: flex; justify-content: center;'>
+                  <br>
+                  <img id="dataflowImage" src=${visualisationImagePath} alt='Visualisation Image' style='width: 100%; height: 10cm;'>
+                </div>`;
+
+                console.log('Success:', data);
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    }
+    </script>
   </body>
 </html>
