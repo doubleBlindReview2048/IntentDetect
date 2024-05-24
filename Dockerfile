@@ -4,7 +4,7 @@ FROM python:3.10-alpine AS builder
 RUN <<EOF
 apk update
 apk add git
-# apk add gcc g++ musl-dev graphviz
+apk add gcc g++ musl-dev graphviz
 EOF
 
 RUN <<EOF
@@ -24,12 +24,16 @@ COPY ./src/requirements.txt /src
 RUN --mount=type=cache,target=/root/.cache/pip \
     pip3 install -r requirements.txt
 
-# COPY ./src/generate_pipeline.py /src
-# RUN --mount=type=cache,target=/root/.cache/pip \
-#     pip3 install numpy scikit-learn
+COPY ./src/generate_pipeline.py /src
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip3 install numpy scikit-learn
 
-# RUN --mount=type=cache,target=/root/.cache/pip \
-#     pip3 install git+https://github.com/hyperopt/hyperopt-sklearn
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip3 install git+https://github.com/hyperopt/hyperopt-sklearn
+
+
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip3 install svgwrite
 
 COPY ../example /src/example
 
