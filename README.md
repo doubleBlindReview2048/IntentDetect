@@ -69,7 +69,7 @@ In order to engage with application you should navigate your web browser to
 curl -X GET http://localhost:9000
 ```
 
-![](example/recording.mov)  
+![](example/recording.gif)  
 
 ## References
 
