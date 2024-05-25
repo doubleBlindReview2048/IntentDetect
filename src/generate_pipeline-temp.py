@@ -17,7 +17,6 @@ from sklearn.preprocessing import StandardScaler
 import json
 from sklearn.metrics import mean_absolute_error
 from sklearn import datasets
-import shutil
 
 
 visualisation =''
@@ -67,7 +66,7 @@ def pipeline_generator(data_file_path, intent):
                                 preprocessing=any_preprocessing("my_pre"),
                                 loss_fn=accuracy_score,
                                 algo=tpe.suggest,
-                                max_evals=5,
+                                max_evals=10,
                                 trial_timeout=300,  verbose= False)
         estim.fit(X_train, y_train)
         metric_file_name = f"accuracy_{dataset_name}.json"
@@ -81,7 +80,7 @@ def pipeline_generator(data_file_path, intent):
                                 preprocessing=any_preprocessing("my_pre"),
                                 loss_fn=mean_absolute_error,
                                 algo=tpe.suggest,
-                                max_evals=5,
+                                max_evals=10,
                                 trial_timeout=300,  verbose= False)
 
         estim.fit(X_train, y_train)
@@ -91,20 +90,20 @@ def pipeline_generator(data_file_path, intent):
         metric_name = "mae"
     
     
-    metric_value = estim.score(X_test, y_test)
+    metric = estim.score(X_test, y_test)
 
-    # data = {
-    #         "dataset_name": dataset_name,
-    #         "intent":intent,
-    #         "metric_name": metric_name,
-    #         "metric_value": metric_value
-    # }
-    # if not os.path.exists('static/hyperopt-results/metric'):
-    #         os.makedirs('static/hyperopt-results/metric')
+    data = {
+            "dataset_name": dataset_name,
+            "intent":intent,
+            "metric_name": metric_name,
+            "metric_value": metric
+    }
+    if not os.path.exists('static/hyperopt-results/metric'):
+            os.makedirs('static/hyperopt-results/metric')
 
-    # # Write data to JSON file
-    # with open(f'static/hyperopt-results/metric/{metric_file_name}', "w") as json_file:
-    #     json.dump(data, json_file)
+    # Write data to JSON file
+    with open(f'static/hyperopt-results/metric/{metric_file_name}', "w") as json_file:
+        json.dump(data, json_file)
 
     # print(estim.best_model())
 
@@ -119,10 +118,8 @@ def pipeline_generator(data_file_path, intent):
         plt.ylabel('True')
         plt.title('Confusion Matrix')
 
-        if os.path.exists('static/hyperopt-results/images'):
-            shutil.rmtree('static/hyperopt-results/images')
-        os.makedirs('static/hyperopt-results/images')
-
+        if not os.path.exists('static/hyperopt-results/images'):
+            os.makedirs('static/hyperopt-results/images')
 
 
         img_filename = f"static/hyperopt-results/images/{dataset_name}-{datetime.now().strftime('%Y%m%d%H%M%S')}-conf_matrix.png"
@@ -137,9 +134,8 @@ def pipeline_generator(data_file_path, intent):
         plt.xlabel('Actual')
         plt.ylabel('Predicted')
         plt.title('Actual vs. Predicted Values')
-        if os.path.exists('static/hyperopt-results/images'):
-            os.rmdir('static/hyperopt-results/images')
-        os.makedirs('static/hyperopt-results/images')
+        if not os.path.exists('static/hyperopt-results/images'):
+            os.makedirs('static/hyperopt-results/images')
         
         img_filename = f"static/hyperopt-results/images/{dataset_name}-{datetime.now().strftime('%Y%m%d%H%M%S')}-scatter_plot.png"
         plt.savefig(img_filename)
@@ -153,64 +149,54 @@ def pipeline_generator(data_file_path, intent):
     graph = Digraph('DataFlow', filename=graph_filename)
     graph.attr(rankdir='LR')
 
+    # Define common width, height, font size, and margin for all nodes
+    common_width = '5cm'  # Width in centimeters
+    common_height = '1cm'  # Height in centimeters
+    common_fontsize = '20'  # Larger font size
+    common_margin = '0.1'  # No 
+    common_pad = '0.1'  # Adjust padding (reduce it to minimize space)
+
+
+    # Common node attributes
+    common_node_attrs = {
+        'shape': 'box',
+        'style': 'filled',
+        'width': common_width,
+        'height': common_height,
+        'fixedsize': 'true',
+        'fontsize': common_fontsize,
+        'common_pad': common_pad,
+        'common_margin': common_margin,
+        'labelloc': 'c',  # Center-align text vertically
+        'justify': 'c'  # Center-align text horizontally
+    }
+
     # Create rectangles
-    graph.node('Dataset', fillcolor='orange', label=f'Dataset:\n{dataset_name}.csv')
-    graph.node('Visualization', fillcolor='lightgreen', label=f'Visualization:\n{visualisation}')
+    graph.node('Dataset', fillcolor='orange', label=f'Dataset:\n{dataset_name}.csv', **common_node_attrs)
+    graph.node('Visualization', fillcolor='lightgreen', label=f'Visualization:\n{visualisation}', **common_node_attrs)
     algo = pipeline['learner']
     algo_name = str(algo).split('(')[0]
-    graph.node('Algorithm', fillcolor='lightblue', label=f'Algorithm:\n{algo_name}')
+    graph.node('Algorithm', fillcolor='lightblue', label=f'Algorithm:\n{algo_name}', **common_node_attrs)
 
     if len(pipeline['preprocs']) != 0:
         prepro = pipeline['preprocs'][0]
         prepro_name = str(prepro).split('(')[0]
-        graph.node('Preprocessing', fillcolor='lightblue', label=f'Preprocessing:\n{prepro_name}')
+        graph.node('Preprocessing', fillcolor='lightblue', label=f'Preprocessing:\n{prepro_name}', **common_node_attrs)
 
     # Add edges
     if len(pipeline['preprocs']) != 0:
-        path='example/template-4-dataflow.svg'
-        
-        if os.path.exists(path):
-            graph_path = graph_filename + '.svg'
-            print(f"The path '{path}' exists.")
-            change = open(path, "rt")
-            data = change.read()
-            data = data.replace('dataset_name.csv', dataset_name + '.csv')
-            data = data.replace('methodX', prepro_name)
-            data = data.replace('Scatter Plot/Confusion Matrix', visualisation)
-            data = data.replace('Classifier/Regressor', algo_name)
-            change.close()
-            change = open(graph_path, "wt")
-            change.write(data)
-            change.close()
-        else:
-            print(f"The path '{path}' does not exist.")
         graph.edge('Dataset', 'Preprocessing')
         graph.edge('Preprocessing', 'Algorithm')
         graph.edge('Algorithm', 'Visualization')
     else:
-        path='example/template-3-dataflow.svg'
-        
-        if os.path.exists(path):
-            print(f"The path '{path}' exists.")
-            graph_path = graph_filename + '.svg'
-            print(f"The path '{path}' exists.")
-            change = open(path, "rt")
-            data = change.read()
-            data = data.replace('dataset_name.csv', dataset_name + '.csv')
-            data = data.replace('Scatter Plot/Confusion Matrix', visualisation)
-            data = data.replace('Classifier/Regressor', algo_name)
-            change.close()
-            change = open(graph_path, "wt")
-            change.write(data)
-            change.close()
-        else:
-            print(f"The path '{path}' does not exist.")
         graph.edge('Dataset', 'Algorithm')
         graph.edge('Algorithm', 'Visualization')
 
+    graph.format = 'svg'
+    graph.render(filename=graph_filename, format='svg', view=False)
     graph.save()
 
-    return img_filename, graph_filename + '.svg', metric_name, metric_value
+    return img_filename, graph_filename + '.svg', metric
 
 
 

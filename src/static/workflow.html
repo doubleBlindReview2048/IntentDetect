@@ -10,6 +10,25 @@
           font-weight: bold;
           text-transform: capitalize;
       }
+      /* Loader styling */
+      #loader {
+            display: none; /* Hidden by default */
+            position: fixed;
+            z-index: 999;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background-color: rgba(255, 255, 255, 0.8);
+            text-align: center;
+        }
+
+        #loader img {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
   </style>
   </head>
   <body class="has-navbar-fixed-top">
@@ -35,7 +54,7 @@
           <p class="title">Automatic Workflow Generation</p>
         </div>
       </section>
-      <section> <p class="subtitle">Based on the textual description the problem can be treated as <span id="prediction_placeholder">{{ prediction }}</span>  task.</p></section>
+      <section> <p class="subtitle">Based on the textual description the problem can be treated as <span id="prediction_placeholder">{{ prediction }}</span>  Task.</p></section>
       <br>  
         <section>
           <div class="columns">
@@ -50,7 +69,7 @@
                       </div>&nbsp;
                       <button class="button is-success has-text-white" onclick="getWorkflowClick()">Generate Workflow</button>
                   </div>
-                  <p class="help">Currently Available for Regression and Classsification Task.</p>
+                  <p class="help">Currently available for Regression and Classsification tasks.</p>
               </div>
           </div>
       </section>
@@ -88,18 +107,32 @@
         </p>
       </div>
     </footer>
+    <!-- Loader -->
+    <div id="loader">
+        <img src="/static/images/loader.gif" alt="Loading...">
+    </div>
     <script defer src="/js/alpinejs_3_13_10.min.js"></script>
     <script>
       function onBackClick() {
         window.location.href = "/";  // Navigate back to index.html
       }
       function getWorkflowClick() {
+                         // Clear previous images
+        document.getElementById("dataflowImageContainer").innerHTML = '';
+        document.getElementById("visualisationImageContainer").innerHTML = '';
+        document.getElementById("accuracyContainer").innerHTML = '';
+        var dataflowImagePath = ''
+        var visualisationImagePath = ''
+
+
         var selectedTool = document.getElementById("selectedTool").value;
         console.log("Selected Tool:", selectedTool);
 
         var prediction = document.getElementById("prediction_placeholder").innerText; // Get the prediction text
         
         if (selectedTool === "hyperopt") {
+          loader.style.display = 'block'; // Show loader
+
             fetch('/api/workflow/hyperopt', {
                 method: 'POST',
                 headers: {
@@ -130,14 +163,15 @@
                           <strong>${metric}:</strong>&nbsp; ${metric_value}
                       </div>`;
                 
-
+               
                 document.getElementById("dataflowImageContainer").innerHTML = `
                 <div id="dataflowImageContainer" style='display: flex; justify-content: center;'>
 
                   <br>
                   <img id="dataflowImage" src=${dataflowImagePath} alt='Visualisation Image' style='width: 100%; height: 1.5cm;'>
                 </div>`;
-
+                
+                
                 
                 document.getElementById("visualisationImageContainer").innerHTML = `
                 <div id="visualisationImageContainer" style='display: flex; justify-content: center;'>
@@ -147,9 +181,14 @@
 
                 console.log('Success:', data);
             })
-            .catch(error => console.error('Error:', error));
-        }
-    }
+            .catch((error) => {
+                console.error('Error:', error);
+            })
+            .finally(() => {
+                loader.style.display = 'none'; // Hide loader
+            });
+          }
+      }
     </script>
   </body>
 </html>

@@ -69,6 +69,8 @@ In order to engage with application you should navigate your web browser to
 curl -X GET http://localhost:9000
 ```
 
+![](example/recording.mov)  
+
 ## References
 
 * [Use the Docker command line](https://docs.docker.com/engine/reference/commandline/cli/)

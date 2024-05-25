@@ -78,6 +78,12 @@ def newpage():
 
 # Define the directory where your images are stored
 IMAGE_DIRECTORY = './static/hyperopt-results/'
+STATIC_DIRECTORY = './static/'
+
+@app.route('/static/images/<path:filename>')
+def serve_loader(filename):
+    return send_from_directory(os.path.join(STATIC_DIRECTORY, 'images'), filename)
+
 
 @app.route('/images/<path:filename>')
 def serve_image(filename):
